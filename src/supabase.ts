@@ -1,16 +1,34 @@
-
+// src/lib/supabase.ts
 import { createClient } from '@supabase/supabase-js';
 
-// Usamos las mismas constantes que están en src/integrations/supabase/client.ts
-const supabaseUrl = 'https://rjaezvlosvfccrkbtmfo.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqYWV6dmxvc3ZmY2Nya2J0bWZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4NTAxNTgsImV4cCI6MjA1ODQyNjE1OH0.SY8pCT5l7hV9-eBNB3gUeZpEzz8AfnPSgrtg5LqhNCg';
+// Tipos generados (opcional pero recomendado)
+// Para generarlos: npx supabase gen types typescript > src/types/database.ts
+import type { Database } from '@/types/database';
 
-// Optimizamos la configuración del cliente
-const supabase = createClient(supabaseUrl, supabaseKey, {
+// Configuración segura con variables de entorno
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Validación en tiempo de ejecución (solo en desarrollo)
+if (process.env.NODE_ENV !== 'production') {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error(
+      'Supabase credentials are missing. Please check your .env.local file'
+    );
+  }
+}
+
+// Creación del cliente con tipos
+const supabase = createClient<Database>(supabaseUrl!, supabaseAnonKey!, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false // Cambiamos a false para evitar chequeos innecesarios
+    detectSessionInUrl: true,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined
+  },
+  // Opciones adicionales recomendadas:
+  realtime: {
+    heartbeatIntervalMs: 10000
   }
 });
 
